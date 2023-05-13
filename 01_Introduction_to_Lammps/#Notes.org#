@@ -1,0 +1,54 @@
+* Correr un trabajo con slurm
+Sirve tanto en la sala de computo y archer2.
+Para correr algo usando slurm, tenemos un archivo parecido a este archivo.
+** opciones de slurm
+todas la opciones de slumr tienen que empezar con =#SBATCH=.
++ =--job-name=lmp_ex1= :: se define como se refereria al trabajo como proceso cuando este corriendo.
++  --nodes=1 :: número de nodos
++  --time=0:20:0 :: si se pasa este tiempo, mata el proceso
++  --hint=nomultithread :: por si no se van a usar opciones paralelas
++  --distribution=block:block :: no se explica, *buscar*
++  --tasks-per-node=1 :: cuantos procesos de MPI se van a crear por cada nodo
++  --cpus-per-task=1 :: cuantos cores se le asigna a cada tarea.
++   --account=ta100 :: el nombre del projecto que fue creado para archer
++  --partition=standard ::
++  --qos=short :: para pequeñas simulaciones, con menos de 20 mins, se les daje correr antes.
+** correr las lammps con slurm
+comandos y opciones de slurm
++ =srun= :: el comando principal de slurm.
++ =lmp= :: es el comando para correr lammps.
++ =-i= :: para el archibo input con los parametros de la simulación. En este caso tenemos como input
+  file a =in.ethanol=.
++ =-l= :: es para poner el nombre del output file. 
+  
+
+Para correr este script de slurm tiene que introducir el comando =sbatch sub.slurm=.
+Para ver las tareas que estan corriendo para solo su usuario, usar el comando =squeue --me=. 
+
+#+name sub.slurm
+#+begin_src sh
+    File Edit Options Buffers Tools Sh-Script Help                                                                      
+  #!/bin/bash                                                                                                         
+
+  # Slurm job options (name, number of compute nodes, job time)                                                    
+  #SBATCH --job-name=lmp_ex1                                                                                          
+  #SBATCH --nodes=1                                                                                                   
+  #SBATCH --time=0:20:0                                                                                               
+  #SBATCH --hint=nomultithread                                                                                        
+  #SBATCH --distribution=block:block                                                                                  
+  #SBATCH --tasks-per-node=1                                                                                          
+  #SBATCH --cpus-per-task=1                                                                                           
+
+  # The budget code of the project                                                                                    
+
+  # load the lammps module                                                                                            
+    module load lammps/23_Jun_2022
+
+  # Set the number of threads to 1                                                                                    
+  #   This prevents any threaded system libraries from automatically                                                  
+  #   using threading.                                                                                                
+  export OMP_NUM_THREADS=1
+
+  # Launch the parallel job                                                                                           
+  srun lmp -i in.ethanol -l ${SLURM_NPROCS}_cpus.log.${SLURM_JOB_ID}
+#+end_src
